@@ -3,13 +3,13 @@
 import { NavLink, Link } from 'react-router-dom'
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Menu, X, Leaf, Zap, BarChart3, Info } from 'lucide-react'
+import { Menu, X, Leaf, BarChart3, Info, TrendingUp } from 'lucide-react'
 import { cn } from '@/lib/cn'
 
-// Navigation items configuration
+// Navigation items — Home, Stock Predictor, Dashboard, About only
 const navItems = [
   { to: '/', label: 'Home', icon: Leaf },
-  { to: '/analyzer', label: 'Analyzer', icon: Zap },
+  { to: '/stocks', label: 'Stock Predictor', icon: TrendingUp },
   { to: '/dashboard', label: 'Dashboard', icon: BarChart3 },
   { to: '/about', label: 'About', icon: Info },
 ]
@@ -68,11 +68,11 @@ export default function Navbar() {
           {/* CTA Button - Desktop */}
           <div className="hidden md:flex">
             <Link
-              to="/analyzer"
+              to="/stocks"
               className="px-5 py-2.5 bg-gradient-to-r from-green-600 to-green-500 text-white font-semibold rounded-xl shadow-lg hover:shadow-green-500/25 hover:from-green-500 hover:to-green-400 transition-all duration-200 flex items-center gap-2"
             >
-              <Zap className="w-4 h-4" />
-              Run Analysis
+              <TrendingUp className="w-4 h-4" />
+              Run Benchmark
             </Link>
           </div>
 
@@ -121,12 +121,12 @@ export default function Navbar() {
 
               {/* Mobile CTA */}
               <Link
-                to="/analyzer"
+                to="/stocks"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="flex items-center justify-center gap-2 w-full mt-4 px-4 py-3 bg-gradient-to-r from-green-600 to-green-500 text-white font-semibold rounded-xl"
               >
-                <Zap className="w-5 h-5" />
-                Run Analysis
+                <TrendingUp className="w-5 h-5" />
+                Run Benchmark
               </Link>
             </div>
           </motion.div>

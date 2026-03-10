@@ -1,11 +1,11 @@
 // App.jsx
-// Main application with routing - Phase 3: UI only, simplified routes
+// Main application with routing — Analyzer removed
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import MainLayout from './layouts/MainLayout'
 import Landing from './pages/Landing'
-import Analyzer from './pages/Analyzer'
 import Dashboard from './pages/Dashboard'
 import About from './pages/About'
+import StockBenchmark from './pages/StockBenchmark'
 
 function App() {
   return (
@@ -13,8 +13,8 @@ function App() {
       <Routes>
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Landing />} />
-          <Route path="analyzer" element={<Analyzer />} />
           <Route path="dashboard" element={<Dashboard />} />
+          <Route path="stocks" element={<StockBenchmark />} />
           <Route path="about" element={<About />} />
         </Route>
       </Routes>

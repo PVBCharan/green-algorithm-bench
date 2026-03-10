@@ -1,0 +1,19 @@
+# Python
+backend/venv/
+backend/env/
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+
+# Node
+frontend/node_modules/
+dist/
+build/
+
+# IDEs
+.vscode/
+.idea/
+
+# Git
+.git/index.lock

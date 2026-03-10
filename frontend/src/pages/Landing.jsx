@@ -40,9 +40,9 @@ const features = [
 
 // How it works steps
 const steps = [
-  { step: '01', title: 'Select Algorithms', description: 'Choose from common sorting and data structure algorithms.' },
-  { step: '02', title: 'Run Analysis', description: 'Execute benchmarks and collect performance metrics.' },
-  { step: '03', title: 'Compare Results', description: 'View detailed comparisons and identify the greenest option.' },
+  { step: '01', title: 'Select Stock & Algorithms', description: 'Choose a stock ticker and pick from ML algorithms including Random Forest, XGBoost, LSTM, and more.' },
+  { step: '02', title: 'Run Benchmark', description: 'Execute predictions and measure runtime, energy, and carbon emissions.' },
+  { step: '03', title: 'Compare Results', description: 'View detailed comparisons and identify the fastest, greenest, and most accurate algorithm.' },
 ]
 
 // Stats
@@ -102,9 +102,9 @@ export default function Landing() {
             transition={{ delay: 0.3 }}
             className="flex flex-col sm:flex-row gap-4 justify-center mb-16"
           >
-            <Link to="/analyzer">
+            <Link to="/stocks">
               <Button size="lg" icon={<Zap className="w-5 h-5" />}>
-                Start Analyzing
+                Start Benchmarking
               </Button>
             </Link>
             <Link to="/about">
@@ -246,13 +246,13 @@ export default function Landing() {
             <p className="text-lg text-white/90 mb-10 max-w-xl mx-auto leading-relaxed">
               Start measuring and optimizing today. Make your code sustainable.
             </p>
-            <Link to="/analyzer">
+            <Link to="/stocks">
               <Button
                 className="bg-white text-green-700 hover:bg-green-50 shadow-lg"
                 size="lg"
                 icon={<Zap className="w-5 h-5" />}
               >
-                Run Your First Analysis
+                Run Your First Benchmark
               </Button>
             </Link>
           </AnimatedSection>

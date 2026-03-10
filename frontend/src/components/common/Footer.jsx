@@ -6,7 +6,7 @@ import { motion } from 'framer-motion'
 
 const footerLinks = [
     { label: 'Home', to: '/' },
-    { label: 'Analyzer', to: '/analyzer' },
+    { label: 'Stock Predictor', to: '/stocks' },
     { label: 'Dashboard', to: '/dashboard' },
     { label: 'About', to: '/about' },
 ]

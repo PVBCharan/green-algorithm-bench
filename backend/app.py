@@ -5,11 +5,12 @@ This application exposes the existing Python logic as REST APIs:
 - System Footprint: Get current system carbon footprint
 - Benchmark: Run algorithm benchmarks
 - Optimize: Get algorithm optimization recommendations
+- Stocks: Fetch live stock data and run ML benchmarks
 """
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routes import system, benchmark, optimize, analyze
+from routes import system, benchmark, optimize, analyze, stocks, stock_benchmark
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -32,6 +33,8 @@ app.include_router(system.router, prefix="/api", tags=["System"])
 app.include_router(benchmark.router, prefix="/api", tags=["Benchmark"])
 app.include_router(optimize.router, prefix="/api", tags=["Optimization"])
 app.include_router(analyze.router, prefix="/api", tags=["Analysis"])
+app.include_router(stocks.router, prefix="/api", tags=["Stocks"])
+app.include_router(stock_benchmark.router, prefix="/api", tags=["Stock Benchmark"])
 
 # Health check endpoint
 @app.get("/health")
@@ -40,7 +43,7 @@ async def health_check():
     Simple health check endpoint to verify server is running.
     """
     return {
-        "status": "healthy",
+        "status": "online",
         "service": "GreenAlgoBench API",
         "version": "1.0.0"
     }
@@ -61,7 +64,10 @@ async def root():
             "optimize": "/api/optimize",
             "analyze": "/api/analyze",
             "analyze_quick": "/api/analyze/quick",
-            "analyze_status": "/api/analyze/status"
+            "analyze_status": "/api/analyze/status",
+            "stocks_data": "/api/stocks/data",
+            "benchmark_run": "/api/benchmark/run",
+            "benchmark_algorithms": "/api/benchmark/algorithms"
         }
     }
 
