@@ -47,7 +47,7 @@ class DQNModel:
     leveraging the deep Q-network architecture for function approximation.
     """
 
-    def __init__(self, epochs=100, learning_rate=0.001, batch_size=32):
+    def __init__(self, epochs=30, learning_rate=0.001, batch_size=32):
         if not TORCH_AVAILABLE:
             raise ImportError("PyTorch is required for DQN model")
         self.model = None
@@ -87,8 +87,10 @@ class DQNModel:
         return predictions
 
     def evaluate(self, y_true, y_pred):
+        mape = float(np.mean(np.abs((y_true - y_pred) / np.where(y_true == 0, 1, y_true))) * 100)
         return {
             "mae": round(float(mean_absolute_error(y_true, y_pred)), 4),
             "rmse": round(float(np.sqrt(mean_squared_error(y_true, y_pred))), 4),
             "r2": round(float(r2_score(y_true, y_pred)), 4),
+            "mape": round(mape, 4),
         }

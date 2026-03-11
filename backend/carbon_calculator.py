@@ -6,7 +6,7 @@ Formula: CO₂ (grams) = Energy (kWh) × Carbon Intensity (kg CO₂/kWh) × 1000
 """
 
 
-def calculate_carbon(energy_wh: float, carbon_intensity_kg_per_kwh: float = 0.475) -> float:
+def calculate_carbon(energy_wh: float, carbon_intensity_kg_per_kwh: float = 0.72) -> float:
     """
     Calculate carbon emissions in grams of CO₂.
 

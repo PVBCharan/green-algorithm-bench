@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field
 from typing import Dict, Any, List, Optional
 import sys
 import os
+import asyncio
 
 # Add backend root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -81,24 +82,29 @@ async def run_stock_benchmark(request: BenchmarkRequest):
                     detail=f"Unknown algorithms: {invalid}. Available: {AVAILABLE_ALGORITHMS}"
                 )
 
-        # Run benchmark for each ticker
-        all_results = {}
-        for ticker in tickers:
-            ticker = ticker.upper().strip()
+        # Run benchmark for each ticker concurrently via thread pool
+        async def _run_ticker(t):
+            t = t.upper().strip()
             try:
-                result = run_benchmark(
-                    ticker=ticker,
+                result = await asyncio.to_thread(
+                    run_benchmark,
+                    ticker=t,
                     records=request.records,
                     algorithms=request.algorithms,
                 )
-                all_results[ticker] = result
+                return t, result
             except Exception as e:
-                all_results[ticker] = {
-                    "ticker": ticker,
+                return t, {
+                    "ticker": t,
                     "error": str(e),
                     "results": [],
                     "recommendations": None,
                 }
+
+        ticker_results = await asyncio.gather(
+            *[_run_ticker(t) for t in tickers]
+        )
+        all_results = {t: r for t, r in ticker_results}
 
         # If only one ticker, return flat result for backward compatibility
         if len(tickers) == 1:

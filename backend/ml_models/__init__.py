@@ -62,3 +62,41 @@ def get_model_registry():
 MODEL_REGISTRY = get_model_registry()
 
 AVAILABLE_ALGORITHMS = list(MODEL_REGISTRY.keys())
+
+
+def train_and_predict(data: dict, algorithm: str = None) -> dict:
+    """
+    Standard function to train a model and get predictions.
+
+    This is a convenience wrapper that follows the spec requirement:
+    each algorithm module must expose a standard train_and_predict(data) function.
+
+    Args:
+        data: dict with keys:
+            - X_train: Training features
+            - X_test: Test features
+            - y_train: Training targets
+            - y_test: Test targets
+        algorithm: Name of algorithm to use (default: LinearRegression)
+
+    Returns:
+        dict: {predictions, metrics: {mae, rmse, r2, mape}}
+    """
+    algo_name = algorithm or "LinearRegression"
+    if algo_name not in MODEL_REGISTRY:
+        raise ValueError(
+            f"Unknown algorithm: {algo_name}. Available: {AVAILABLE_ALGORITHMS}"
+        )
+
+    model_class = MODEL_REGISTRY[algo_name]
+    model = model_class()
+
+    model.train(data["X_train"], data["y_train"])
+    predictions = model.predict(data["X_test"])
+    metrics = model.evaluate(data["y_test"], predictions)
+
+    return {
+        "algorithm": algo_name,
+        "predictions": predictions,
+        "metrics": metrics,
+    }

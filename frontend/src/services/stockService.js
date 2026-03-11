@@ -41,6 +41,6 @@ export const runStockBenchmark = async (tickers, records, algorithms) => {
         records,
         algorithms,
     }, {
-        timeout: 600000, // 10 minute timeout for multi-stock ML benchmarks
+        timeout: 1800000, // 30 minute timeout for multi-stock ML benchmarks (10 algos × multiple stocks)
     })
 }

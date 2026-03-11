@@ -9,13 +9,29 @@ import numpy as np
 import pandas as pd
 import yfinance as yf
 from sklearn.preprocessing import MinMaxScaler
-from functools import lru_cache
-import hashlib
-import json
+import sys
+import os
 
+# Ensure backend root is in path for imports
+backend_dir = os.path.dirname(os.path.abspath(__file__))
+if backend_dir not in sys.path:
+    sys.path.insert(0, backend_dir)
 
-# In-memory cache for stock data to avoid repeated API calls
-_stock_cache = {}
+# Import TTL cache
+try:
+    from cache.stock_cache import stock_cache
+except ImportError:
+    # Fallback: simple dict cache if cache module not available
+    class _FallbackCache:
+        def __init__(self):
+            self._data = {}
+        def get(self, ticker, records):
+            return self._data.get(f"{ticker}_{records}")
+        def set(self, ticker, records, data):
+            self._data[f"{ticker}_{records}"] = data.copy()
+        def clear(self):
+            self._data.clear()
+    stock_cache = _FallbackCache()
 
 
 def fetch_stock_data(ticker: str, records: int = 5000) -> pd.DataFrame:
@@ -29,9 +45,10 @@ def fetch_stock_data(ticker: str, records: int = 5000) -> pd.DataFrame:
     Returns:
         DataFrame with columns: Date, Open, High, Low, Close, Volume
     """
-    cache_key = f"{ticker}_{records}"
-    if cache_key in _stock_cache:
-        return _stock_cache[cache_key].copy()
+    # Check TTL cache first
+    cached = stock_cache.get(ticker, records)
+    if cached is not None:
+        return cached
 
     # Fetch maximum available data
     stock = yf.Ticker(ticker)
@@ -52,8 +69,8 @@ def fetch_stock_data(ticker: str, records: int = 5000) -> pd.DataFrame:
     if len(df) > records:
         df = df.tail(records).reset_index(drop=True)
 
-    # Cache the result
-    _stock_cache[cache_key] = df.copy()
+    # Cache the result with TTL
+    stock_cache.set(ticker, records, df)
 
     return df
 
@@ -159,5 +176,4 @@ def prepare_train_test(df: pd.DataFrame, test_size: float = 0.2):
 
 def clear_cache():
     """Clear the stock data cache."""
-    global _stock_cache
-    _stock_cache = {}
+    stock_cache.clear()

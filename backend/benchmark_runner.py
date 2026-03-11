@@ -53,17 +53,29 @@ def run_benchmark(ticker: str, records: int = 5000, algorithms: list = None) -> 
     # Step 3: Prepare train/test split
     X_train, X_test, y_train, y_test, feature_names = prepare_train_test(processed_df)
 
-    # Dynamically reduce dataset if too large for heavy algorithms
+    # Dynamically reduce dataset if too large
     max_train_size = 4000
     if len(X_train) > max_train_size:
         X_train = X_train[-max_train_size:]
         y_train = y_train[-max_train_size:]
 
+    # Deep learning models need a tighter cap to keep benchmarks fast
+    DEEP_LEARNING_ALGOS = {"CNN", "LSTM", "DQN"}
+    dl_max_train_size = 1500
+    has_dl = bool(DEEP_LEARNING_ALGOS.intersection(algorithms))
+
     # Step 4: Run each algorithm
     results = []
     for algo_name in algorithms:
+        # Use a smaller dataset for DL models to avoid extreme runtimes
+        if algo_name in DEEP_LEARNING_ALGOS and len(X_train) > dl_max_train_size:
+            X_tr = X_train[-dl_max_train_size:]
+            y_tr = y_train[-dl_max_train_size:]
+        else:
+            X_tr = X_train
+            y_tr = y_train
         result = _run_single_algorithm(
-            algo_name, X_train, X_test, y_train, y_test
+            algo_name, X_tr, X_test, y_train if algo_name not in DEEP_LEARNING_ALGOS else y_tr, y_test
         )
         results.append(result)
 
@@ -134,6 +146,7 @@ def _run_single_algorithm(
             "mae": metrics["mae"],
             "rmse": metrics["rmse"],
             "r2": metrics["r2"],
+            "mape": metrics.get("mape", 0),
             "predictions_sample": y_pred[:10].tolist(),
             "actuals_sample": y_test[:10].tolist(),
         }
@@ -150,6 +163,7 @@ def _run_single_algorithm(
             "energy_wh": 0,
             "co2_g": 0,
             "mae": 0,
+            "mape": 0,
             "rmse": 0,
             "r2": 0,
         }

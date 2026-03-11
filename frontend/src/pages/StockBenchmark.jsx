@@ -300,6 +300,7 @@ function StockResultBlock({ ticker, stockData }) {
                                 <th className="text-right py-3 px-4 font-semibold text-slate-600">MAE</th>
                                 <th className="text-right py-3 px-4 font-semibold text-slate-600">RMSE</th>
                                 <th className="text-right py-3 px-4 font-semibold text-slate-600">R²</th>
+                                <th className="text-right py-3 px-4 font-semibold text-slate-600">MAPE (%)</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -328,6 +329,7 @@ function StockResultBlock({ ticker, stockData }) {
                                             {r.r2?.toFixed(4)}
                                         </span>
                                     </td>
+                                    <td className="text-right py-3 px-4 text-slate-700 font-mono">{r.mape?.toFixed(2)}</td>
                                 </tr>
                             ))}
                         </tbody>
@@ -339,6 +341,12 @@ function StockResultBlock({ ticker, stockData }) {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="card-base shadow-md">
                     <BarChart data={successResults} labelKey="algorithm" valueKey="runtime" title={`Runtime — ${ticker}`} unit="seconds" />
+                </div>
+                <div className="card-base shadow-md">
+                    <BarChart data={successResults} labelKey="algorithm" valueKey="cpu_usage" title={`CPU Usage — ${ticker}`} unit="%" />
+                </div>
+                <div className="card-base shadow-md">
+                    <BarChart data={successResults} labelKey="algorithm" valueKey="memory_usage_mb" title={`Memory Usage — ${ticker}`} unit="MB" />
                 </div>
                 <div className="card-base shadow-md">
                     <BarChart data={successResults} labelKey="algorithm" valueKey="energy_wh" title={`Energy — ${ticker}`} unit="Wh" />
@@ -657,8 +665,8 @@ export default function StockBenchmark() {
                                                         id={`algo-${algo.id}`}
                                                         onClick={() => toggleAlgorithm(algo.id)}
                                                         className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 border ${isSelected
-                                                                ? 'bg-green-600 text-white border-green-600 shadow-md shadow-green-600/20'
-                                                                : 'bg-white text-slate-600 border-slate-200 hover:border-green-400 hover:text-green-600'
+                                                            ? 'bg-green-600 text-white border-green-600 shadow-md shadow-green-600/20'
+                                                            : 'bg-white text-slate-600 border-slate-200 hover:border-green-400 hover:text-green-600'
                                                             }`}
                                                     >
                                                         {isSelected && <Check className="w-3.5 h-3.5 inline mr-1.5 -mt-0.5" />}
