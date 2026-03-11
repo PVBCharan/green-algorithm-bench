@@ -24,7 +24,7 @@ from ml_models import MODEL_REGISTRY, AVAILABLE_ALGORITHMS
 DEEP_LEARNING_ALGOS = {"CNN", "LSTM", "DQN"}
 
 
-def run_benchmark(ticker: str, records: int = 2000, algorithms: list = None) -> dict:
+def run_benchmark(ticker: str, records: int = 5000, algorithms: list = None) -> dict:
     """
     Run the complete stock prediction benchmark pipeline.
 
@@ -58,18 +58,18 @@ def run_benchmark(ticker: str, records: int = 2000, algorithms: list = None) -> 
     X_train, X_test, y_train, y_test, feature_names = prepare_train_test(processed_df)
 
     # Cap training size for traditional ML models
-    max_train_size = 1500
+    max_train_size = 2000
     if len(X_train) > max_train_size:
         X_train = X_train[-max_train_size:]
         y_train = y_train[-max_train_size:]
 
-    # Even tighter cap for deep learning models
+    # Tighter cap for deep learning models to prevent OOM
     dl_max_train_size = 800
 
     # Step 4: Run each algorithm sequentially with memory cleanup
     results = []
     for algo_name in algorithms:
-        # Use a smaller dataset for DL models to avoid OOM
+        # Use a smaller dataset for DL models
         if algo_name in DEEP_LEARNING_ALGOS and len(X_train) > dl_max_train_size:
             X_tr = X_train[-dl_max_train_size:]
             y_tr = y_train[-dl_max_train_size:]
@@ -82,7 +82,7 @@ def run_benchmark(ticker: str, records: int = 2000, algorithms: list = None) -> 
         )
         results.append(result)
 
-        # Free memory after each model (critical on 512MB Render)
+        # Free memory after each model (critical on constrained servers)
         gc.collect()
 
     # Step 5: Generate recommendations
@@ -182,12 +182,6 @@ def _run_single_algorithm(
 def _generate_recommendations(results: list) -> dict:
     """
     Generate recommendations: fastest, greenest, most accurate.
-
-    Args:
-        results: List of successful result dicts
-
-    Returns:
-        dict: Recommendations with algorithm names
     """
     if not results:
         return {

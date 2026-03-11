@@ -413,21 +413,12 @@ export default function StockBenchmark() {
     const [progress, setProgress] = useState('')
     const [stockDropdownOpen, setStockDropdownOpen] = useState(false)
 
-    const MAX_TICKERS = 3
-
     const toggleTicker = useCallback((ticker) => {
-        setSelectedTickers(prev => {
-            if (prev.includes(ticker)) {
-                setWarning(null)
-                return prev.filter(t => t !== ticker)
-            }
-            if (prev.length >= MAX_TICKERS) {
-                setWarning(`Maximum ${MAX_TICKERS} stocks allowed per benchmark to prevent server overload.`)
-                return prev
-            }
-            setWarning(null)
-            return [...prev, ticker]
-        })
+        setSelectedTickers(prev =>
+            prev.includes(ticker)
+                ? prev.filter(t => t !== ticker)
+                : [...prev, ticker]
+        )
     }, [])
 
     const toggleAlgorithm = useCallback((algoId) => {
@@ -628,7 +619,7 @@ export default function StockBenchmark() {
                                     type="range"
                                     id="records-slider"
                                     min="100"
-                                    max="2000"
+                                    max="5000"
                                     step="100"
                                     value={records}
                                     onChange={(e) => setRecords(parseInt(e.target.value))}
@@ -636,8 +627,8 @@ export default function StockBenchmark() {
                                 />
                                 <div className="flex justify-between text-xs text-slate-400 mt-1">
                                     <span>100</span>
-                                    <span>1000</span>
-                                    <span>2000</span>
+                                    <span>2500</span>
+                                    <span>5000</span>
                                 </div>
                             </div>
                         </div>
