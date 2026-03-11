@@ -2,7 +2,7 @@
  * Stock Service
  * 
  * API calls for stock data fetching and ML benchmark execution.
- * Supports multi-stock benchmarking.
+ * Supports multi-stock benchmarking with per-ticker batching.
  */
 
 import api from './api'
@@ -16,7 +16,7 @@ import api from './api'
 export const fetchStockData = async (ticker, records = 5000) => {
     return api.get('/api/stocks/data', {
         params: { ticker, records },
-        timeout: 30000,
+        timeout: 60000,
     })
 }
 
@@ -29,11 +29,28 @@ export const getAvailableAlgorithms = async () => {
 }
 
 /**
- * Run stock prediction benchmark for one or more tickers
- * @param {string[]} tickers - Array of stock ticker symbols
+ * Run stock prediction benchmark for a SINGLE ticker.
+ * For multiple tickers, call this in a loop from the UI
+ * to avoid server overload and show per-ticker progress.
+ * 
+ * @param {string} ticker - Single stock ticker symbol
  * @param {number} records - Number of records
  * @param {string[]} algorithms - List of algorithm names
- * @returns {Promise} Benchmark results
+ * @returns {Promise} Benchmark results for this ticker
+ */
+export const runSingleTickerBenchmark = async (ticker, records, algorithms) => {
+    return api.post('/api/benchmark/run', {
+        tickers: [ticker],
+        records,
+        algorithms,
+    }, {
+        timeout: 600000, // 10 min per single ticker (10 algos)
+    })
+}
+
+/**
+ * Legacy: Run benchmark for multiple tickers in one request.
+ * Kept for backward compatibility but prefer runSingleTickerBenchmark.
  */
 export const runStockBenchmark = async (tickers, records, algorithms) => {
     return api.post('/api/benchmark/run', {
@@ -41,6 +58,6 @@ export const runStockBenchmark = async (tickers, records, algorithms) => {
         records,
         algorithms,
     }, {
-        timeout: 1800000, // 30 minute timeout for multi-stock ML benchmarks (10 algos × multiple stocks)
+        timeout: 1800000,
     })
 }

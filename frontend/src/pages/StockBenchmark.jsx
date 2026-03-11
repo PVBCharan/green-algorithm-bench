@@ -7,7 +7,7 @@ import {
     Cpu, Zap, Award, BarChart3,
     Loader2, AlertCircle, Target, Info, X
 } from 'lucide-react'
-import { runStockBenchmark } from '../services/stockService'
+import { runSingleTickerBenchmark } from '../services/stockService'
 
 // Full stock list with company names
 const STOCK_OPTIONS = [
@@ -456,21 +456,64 @@ export default function StockBenchmark() {
         setError(null)
         setWarning(null)
         setResults(null)
-        setProgress(`Fetching data for ${selectedTickers.join(', ')} and running ${selectedAlgorithms.length} algorithm(s)...`)
 
-        try {
-            const data = await runStockBenchmark(selectedTickers, records, selectedAlgorithms)
-            setResults(data)
-            setProgress('')
-            // Persist for Dashboard
-            try { sessionStorage.setItem('lastBenchmarkResults', JSON.stringify(data)) } catch (e) { /* ignore */ }
-        } catch (err) {
-            const msg = err.response?.data?.detail || err.message || 'Benchmark failed. Please ensure the backend is running.'
-            setError(msg)
-            setProgress('')
-        } finally {
-            setLoading(false)
+        // Process tickers ONE AT A TIME to avoid server overload
+        const allStockResults = {}
+        let failCount = 0
+
+        for (let i = 0; i < selectedTickers.length; i++) {
+            const ticker = selectedTickers[i]
+            setProgress(`Processing ${ticker} (${i + 1}/${selectedTickers.length}) with ${selectedAlgorithms.length} algorithm(s)...`)
+
+            try {
+                const data = await runSingleTickerBenchmark(ticker, records, selectedAlgorithms)
+                allStockResults[ticker] = data
+            } catch (err) {
+                failCount++
+                allStockResults[ticker] = {
+                    ticker,
+                    error: err.response?.data?.detail || err.message || `Failed for ${ticker}`,
+                    results: [],
+                    recommendations: null,
+                }
+            }
+
+            // Show partial results as they come in
+            if (selectedTickers.length > 1) {
+                setResults({
+                    multi: true,
+                    tickers: selectedTickers.slice(0, i + 1),
+                    records,
+                    stock_results: { ...allStockResults },
+                })
+            }
         }
+
+        // Final results
+        if (selectedTickers.length === 1) {
+            const single = allStockResults[selectedTickers[0]]
+            single.multi = false
+            setResults(single)
+        } else {
+            setResults({
+                multi: true,
+                tickers: selectedTickers,
+                records,
+                stock_results: allStockResults,
+            })
+        }
+
+        if (failCount > 0 && failCount < selectedTickers.length) {
+            setWarning(`${failCount} stock(s) failed but others completed successfully.`)
+        } else if (failCount === selectedTickers.length) {
+            setError('All benchmarks failed. Please check if the backend is running.')
+        }
+
+        setProgress('')
+        setLoading(false)
+
+        // Persist for Dashboard
+        try { sessionStorage.setItem('lastBenchmarkResults', JSON.stringify(allStockResults)) } catch (e) { /* ignore */ }
     }
 
     const handleReset = () => {
