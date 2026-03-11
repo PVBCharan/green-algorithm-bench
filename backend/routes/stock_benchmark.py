@@ -20,6 +20,11 @@ from ml_models import AVAILABLE_ALGORITHMS
 
 router = APIRouter()
 
+# --- Production limits (Render free tier: 512MB RAM) ---
+MAX_TICKERS = 3
+MAX_RECORDS = 2000
+MAX_ALGOS_WITH_DL = 10  # all algos allowed, but dataset is auto-capped
+
 
 class BenchmarkRequest(BaseModel):
     """Request body for running a stock benchmark.
@@ -28,7 +33,7 @@ class BenchmarkRequest(BaseModel):
     """
     ticker: Optional[str] = Field(None, description="Single stock ticker (backward compat)")
     tickers: Optional[List[str]] = Field(None, description="Multiple stock tickers")
-    records: int = Field(5000, ge=10, le=10000, description="Number of stock records")
+    records: int = Field(2000, ge=10, le=5000, description="Number of stock records")
     algorithms: Optional[List[str]] = Field(
         None,
         description="List of algorithm names. If null, runs all available."
@@ -53,13 +58,6 @@ async def run_stock_benchmark(request: BenchmarkRequest):
 
     Accepts tickers as an array for multi-stock benchmarking.
     Falls back to single ticker field for backward compatibility.
-
-    Example request (multi-stock):
-        {
-            "tickers": ["AAPL", "TSLA", "MSFT"],
-            "records": 5000,
-            "algorithms": ["LinearRegression", "RandomForest", "XGBoost"]
-        }
     """
     try:
         # Resolve tickers list — support both single and multi
@@ -73,6 +71,16 @@ async def run_stock_benchmark(request: BenchmarkRequest):
                 detail="At least one ticker is required. Provide 'tickers' array or 'ticker' string."
             )
 
+        # Enforce ticker limit to avoid OOM
+        if len(tickers) > MAX_TICKERS:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Maximum {MAX_TICKERS} stocks allowed per request. You selected {len(tickers)}."
+            )
+
+        # Cap records to prevent memory issues on production
+        capped_records = min(request.records, MAX_RECORDS)
+
         # Validate algorithms if provided
         if request.algorithms:
             invalid = [a for a in request.algorithms if a not in AVAILABLE_ALGORITHMS]
@@ -82,29 +90,25 @@ async def run_stock_benchmark(request: BenchmarkRequest):
                     detail=f"Unknown algorithms: {invalid}. Available: {AVAILABLE_ALGORITHMS}"
                 )
 
-        # Run benchmark for each ticker concurrently via thread pool
-        async def _run_ticker(t):
-            t = t.upper().strip()
+        # Run benchmark for each ticker SEQUENTIALLY to control memory usage
+        all_results = {}
+        for ticker in tickers:
+            ticker = ticker.upper().strip()
             try:
                 result = await asyncio.to_thread(
                     run_benchmark,
-                    ticker=t,
-                    records=request.records,
+                    ticker=ticker,
+                    records=capped_records,
                     algorithms=request.algorithms,
                 )
-                return t, result
+                all_results[ticker] = result
             except Exception as e:
-                return t, {
-                    "ticker": t,
+                all_results[ticker] = {
+                    "ticker": ticker,
                     "error": str(e),
                     "results": [],
                     "recommendations": None,
                 }
-
-        ticker_results = await asyncio.gather(
-            *[_run_ticker(t) for t in tickers]
-        )
-        all_results = {t: r for t, r in ticker_results}
 
         # If only one ticker, return flat result for backward compatibility
         if len(tickers) == 1:
@@ -116,7 +120,7 @@ async def run_stock_benchmark(request: BenchmarkRequest):
         return {
             "multi": True,
             "tickers": tickers,
-            "records": request.records,
+            "records": capped_records,
             "stock_results": all_results,
         }
 
