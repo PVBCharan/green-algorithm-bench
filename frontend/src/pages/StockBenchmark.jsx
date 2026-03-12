@@ -441,7 +441,10 @@ export default function StockBenchmark() {
     }, [])
 
     const handleRunBenchmark = async () => {
-        if (selectedTickers.length === 0) {
+        // Defensive: strip any blank/falsy entries from selectedTickers
+        const validTickers = selectedTickers.filter(t => t && String(t).trim())
+
+        if (validTickers.length === 0) {
             setWarning('Please select at least one stock ticker.')
             setError(null)
             return
@@ -461,9 +464,9 @@ export default function StockBenchmark() {
         const allStockResults = {}
         let failCount = 0
 
-        for (let i = 0; i < selectedTickers.length; i++) {
-            const ticker = selectedTickers[i]
-            setProgress(`Processing ${ticker} (${i + 1}/${selectedTickers.length}) with ${selectedAlgorithms.length} algorithm(s)...`)
+        for (let i = 0; i < validTickers.length; i++) {
+            const ticker = validTickers[i]
+            setProgress(`Processing ${ticker} (${i + 1}/${validTickers.length}) with ${selectedAlgorithms.length} algorithm(s)...`)
 
             try {
                 const data = await runSingleTickerBenchmark(ticker, records, selectedAlgorithms)
@@ -479,10 +482,10 @@ export default function StockBenchmark() {
             }
 
             // Show partial results as they come in
-            if (selectedTickers.length > 1) {
+            if (validTickers.length > 1) {
                 setResults({
                     multi: true,
-                    tickers: selectedTickers.slice(0, i + 1),
+                    tickers: validTickers.slice(0, i + 1),
                     records,
                     stock_results: { ...allStockResults },
                 })
@@ -490,22 +493,22 @@ export default function StockBenchmark() {
         }
 
         // Final results
-        if (selectedTickers.length === 1) {
-            const single = allStockResults[selectedTickers[0]]
+        if (validTickers.length === 1) {
+            const single = allStockResults[validTickers[0]]
             single.multi = false
             setResults(single)
         } else {
             setResults({
                 multi: true,
-                tickers: selectedTickers,
+                tickers: validTickers,
                 records,
                 stock_results: allStockResults,
             })
         }
 
-        if (failCount > 0 && failCount < selectedTickers.length) {
+        if (failCount > 0 && failCount < validTickers.length) {
             setWarning(`${failCount} stock(s) failed but others completed successfully.`)
-        } else if (failCount === selectedTickers.length) {
+        } else if (failCount === validTickers.length) {
             setError('All benchmarks failed. Please check if the backend is running.')
         }
 

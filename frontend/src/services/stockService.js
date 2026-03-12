@@ -39,10 +39,13 @@ export const getAvailableAlgorithms = async () => {
  * @returns {Promise} Benchmark results for this ticker
  */
 export const runSingleTickerBenchmark = async (ticker, records, algorithms) => {
+    if (!ticker || !String(ticker).trim()) {
+        throw new Error('A valid stock ticker is required.')
+    }
     return api.post('/api/benchmark/run', {
-        tickers: [ticker],
+        tickers: [String(ticker).trim().toUpperCase()],
         records,
-        algorithms,
+        algorithms: algorithms && algorithms.length > 0 ? algorithms : null,
     }, {
         timeout: 600000, // 10 min per single ticker (10 algos)
     })

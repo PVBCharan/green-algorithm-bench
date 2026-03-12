@@ -54,13 +54,20 @@ async def run_stock_benchmark(request: BenchmarkRequest):
     Accepts tickers as an array for multi-stock benchmarking.
     Falls back to single ticker field for backward compatibility.
     """
+    # Debug logging — print the raw request body so we can trace 400 errors
+    print(f"[benchmark/run] Received request: ticker={request.ticker!r}, tickers={request.tickers!r}, records={request.records}, algorithms={request.algorithms!r}")
+
     try:
         # Resolve tickers list — support both single and multi
         tickers = request.tickers or []
         if not tickers and request.ticker:
             tickers = [request.ticker]
+
+        # Filter out any blank/None entries defensively
+        tickers = [t for t in tickers if t and str(t).strip()]
         
         if not tickers:
+            print(f"[benchmark/run] 400 — no valid tickers after filtering. Raw: ticker={request.ticker!r}, tickers={request.tickers!r}")
             raise HTTPException(
                 status_code=400,
                 detail="At least one ticker is required. Provide 'tickers' array or 'ticker' string."
